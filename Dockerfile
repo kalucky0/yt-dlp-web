@@ -1,11 +1,11 @@
-FROM python:3.12-slim
+FROM python:3.13.3-alpine3.22
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     ffmpeg \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/cache/apk/*
 
 COPY pyproject.toml uv.lock* ./
 
@@ -20,4 +20,9 @@ EXPOSE 8080
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
 USER appuser
 
-CMD ["uv", "run", "python", "main.py"]
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONOPTIMIZE=2
+ENV FLASK_ENV=production
+
+CMD ["uv", "run", "gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"]
