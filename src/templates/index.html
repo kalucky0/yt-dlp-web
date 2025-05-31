@@ -161,8 +161,7 @@
             margin-top: 15px;
             text-align: center;
         }
-        
-        .error {
+          .error {
             display: none;
             color: #dc3545;
             font-weight: 600;
@@ -171,6 +170,49 @@
             padding: 12px;
             background: #f8d7da;
             border-radius: 8px;
+        }
+        
+        .info {
+            display: none;
+            color: #155724;
+            font-weight: 600;
+            margin-top: 15px;
+            padding: 16px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+        }
+        
+        .info h3 {
+            margin: 0 0 12px 0;
+            color: #155724;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #155724;
+        }
+        
+        .info-value {
+            color: #0f5132;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
         }
         
         @media (max-width: 600px) {
@@ -217,12 +259,16 @@
                     ℹ️ Get Info
                 </button>
             </div>
-            
-            <div class="loading" id="loading">
+              <div class="loading" id="loading">
                 ⏳ Processing your request...
             </div>
             
             <div class="error" id="error"></div>
+            
+            <div class="info" id="info">
+                <h3>📹 Video Information</h3>
+                <div id="infoContent"></div>
+            </div>
         </form>
         
         <div class="info-section">
@@ -254,9 +300,11 @@
             const url = document.getElementById('videoUrl').value;
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
+            const info = document.getElementById('info');
             
             loading.style.display = 'block';
             error.style.display = 'none';
+            info.style.display = 'none';
             
             const downloadUrl = `/download?url=${encodeURIComponent(url)}`;
             
@@ -271,27 +319,51 @@
                 loading.style.display = 'none';
             }, 2000);
         });
-        
-        async function getVideoInfo() {
+          async function getVideoInfo() {
             const url = document.getElementById('videoUrl').value;
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
+            const info = document.getElementById('info');
+            const infoContent = document.getElementById('infoContent');
             
             if (!url) {
                 error.textContent = 'Please enter a video URL first.';
                 error.style.display = 'block';
+                info.style.display = 'none';
                 return;
             }
             
             loading.style.display = 'block';
             error.style.display = 'none';
+            info.style.display = 'none';
             
             try {
                 const response = await fetch(`/info?url=${encodeURIComponent(url)}`);
                 const data = await response.json();
                 
                 if (response.ok) {
-                    alert(`Title: ${data.title}\\nFilename: ${data.filename}\\nFormat: ${data.extension}\\nSize: ${data.filesize ? (data.filesize / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown'}`);
+                    const fileSize = data.filesize ? (data.filesize / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown';
+                    
+                    infoContent.innerHTML = `
+                        <div class="info-item">
+                            <span class="info-label">Title:</span>
+                            <span class="info-value">${data.title || 'Unknown'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Filename:</span>
+                            <span class="info-value">${data.filename || 'Unknown'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value">${data.extension || 'Unknown'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Size:</span>
+                            <span class="info-value">${fileSize}</span>
+                        </div>
+                    `;
+                    
+                    info.style.display = 'block';
                 } else {
                     error.textContent = data.error || 'Failed to get video information.';
                     error.style.display = 'block';
